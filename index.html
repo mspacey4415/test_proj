@@ -186,7 +186,9 @@
       if (web3 && contract) {
         try {
           const accounts = await web3.eth.getAccounts();
-          await contract.methods.mint(10).send({ from: accounts[0] });
+	  const mintAmount = web3.utils.toWei('10', 'ether'); // Convert 10 tokens to Wei
+	  await contract.methods.mint(mintAmount).send({ from: accounts[0] });
+		
           console.log('Minted 10 tokens and sent to account:', accounts[0]);
         } catch (error) {
           console.error('Error minting tokens:', error);
