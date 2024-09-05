@@ -1,49 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connect MetaMask</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        button {
-            padding: 15px 30px;
-            font-size: 18px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto App</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
 </head>
 <body>
-    <button id="connectWallet">Connect Wallet & Say Hello</button>
+  <h1>My Crypto App</h1>
+  <button id="connectButton">Connect MetaMask</button>
+  <button id="mintButton">Mint & Send Tokens</button>
 
-    <script>
-        // Function to connect to MetaMask
-        async function connectWallet() {
-            if (typeof window.ethereum !== 'undefined') {
-                try {
-                    // Request access to the user's MetaMask wallet
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    
-                    // Successfully connected, now display a hello message
-                    alert('Hello, your wallet is connected! Your account: ' + accounts[0]);
-                } catch (error) {
-                    console.error("User denied account access", error);
-                }
-            } else {
-                alert("MetaMask is not installed!");
-            }
+  <script>
+    let web3;
+    let contract;
+
+    // ABI and contract address
+    const contractABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "mint",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transfer",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "success",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "initialSupply",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "decimals",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+    const contractAddress = '0x8b49eA2C2c87f512368605116E88841452dF17b9'; // Replace with your contract address
+
+    // Connect MetaMask
+    document.getElementById('connectButton').addEventListener('click', async () => {
+      if (typeof window.ethereum !== 'undefined') {
+        web3 = new Web3(window.ethereum);
+        try {
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          console.log('MetaMask connected');
+          // Initialize contract
+          contract = new web3.eth.Contract(contractABI, contractAddress);
+        } catch (error) {
+          console.error('User denied account access or other error');
         }
+      } else {
+        alert('Please install MetaMask!');
+      }
+    });
 
-        // Attach the function to the button click event
-        document.getElementById("connectWallet").addEventListener("click", connectWallet);
-    </script>
+    // Mint & Send Tokens
+    document.getElementById('mintButton').addEventListener('click', async () => {
+      if (web3 && contract) {
+        try {
+          const accounts = await web3.eth.getAccounts();
+          await contract.methods.mint(10).send({ from: accounts[0] });
+          console.log('Minted 10 tokens and sent to account:', accounts[0]);
+        } catch (error) {
+          console.error('Error minting tokens:', error);
+        }
+      } else {
+        alert('MetaMask not connected or contract not initialized');
+      }
+    });
+  </script>
 </body>
 </html>
